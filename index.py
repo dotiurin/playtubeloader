@@ -101,7 +101,7 @@ def threads_lists(threads):
 threads_ls = threads_lists(threads)
 
 
-def retarded_func(threads_ls, item):
+def iteration_list(threads_ls, item):
     for thr in threads_ls:
         final_list = []
         for iter in thr:
@@ -109,7 +109,7 @@ def retarded_func(threads_ls, item):
         yield(final_list)
 
 
-threads_ls = retarded_func(threads_ls, item)
+threads_ls = iteration_list(threads_ls, item)
 
 for thread in threads_ls:
     t = threading.Thread(target=starter, args=(soup_title, thread))
