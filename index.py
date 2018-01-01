@@ -11,10 +11,8 @@ from pytube.helpers import safe_filename
 import threading
 
 
-def collect(playlink):
-    sauce = urllib.request.urlopen(playlink).read()
-    soup = bs.BeautifulSoup(sauce, 'lxml')
-    new_soup = soup.find_all("a", class_='pl-video-title-link yt-uix-tile-link yt-uix-sessionlink spf-link ')[:]
+def collect(doc_lxml):
+    new_soup = doc_lxml.find_all("a", class_='pl-video-title-link yt-uix-tile-link yt-uix-sessionlink spf-link ')[:]
     links_list = []
     for link in new_soup:
         final_link = link.get("href")
@@ -23,10 +21,15 @@ def collect(playlink):
     return final_link
 
 
-def create_folder(playlink):
+def get_lxml_page(playlink):
     sauce = urllib.request.urlopen(playlink).read()
     soup = bs.BeautifulSoup(sauce, 'lxml')
-    soup_title = soup.title.text.replace(' - YouTube', "")
+    return soup
+
+
+def create_folder(doc_lxml):
+    soup_title = doc_lxml.title.text.replace(' - YouTube', "")
+    soup_title = "--" + soup_title
     soup_title = safe_filename(soup_title)
     print(soup_title)
     try:
@@ -49,68 +52,58 @@ def convert_mp3(soup_title, ylink):
             clip = mp.VideoFileClip(soup_title+'/'+ylink+'.mp4')
         except OSError:
             clip = mp.VideoFileClip(soup_title+'/'+ylink+'.webm')
-
-        clip.audio.write_audiofile('mp3 - '+soup_title+'/'+ylink+'.mp3', progress_bar=False)
-        print(ylink+'.mp3 created')
+        clip.audio.write_audiofile('mp3 - '+soup_title+'/'+ylink+'.mp3', progress_bar=False, verbose=False)
 
 
 def get_threads(item):
-    threadcoef = int(len(item)/4)  # кол-во потоков
+    threadcoef = int(len(item)/5)  # кол-во потоков
     threads = list(range(len(item)))[::threadcoef]
-    print(threads)
     return threads
 
 
-def starter(soup_title, item):
-    for a in item:
+def starter(soup_title, adress_list):
+    for addr in adress_list:
         try:
-            youlink = 'https://www.youtube.com' + a
+            youlink = 'https://www.youtube.com' + addr
             ylink = urllib.request.urlopen(youlink).read()
             ylink = bs.BeautifulSoup(ylink, 'lxml')
             ylink = ylink.title.text.replace(' - YouTube', "")
             ylink = safe_filename(ylink)
             if not os.path.exists(soup_title + '/' + ylink + '.mp4') | (os.path.exists(soup_title + '/' + ylink + '.webm')):
                 YouTube(youlink).streams.first().download(soup_title)
-                print("video downloaded "+ylink)
-            else:
-                print("video excists")
             convert_mp3(soup_title, ylink)
         except urllib.error.URLError:
-            print('Connection error '+ylink)
+            pass
         except pytube.exceptions.AgeRestrictionError:
-            print('ADULT CONTENT '+ylink)
+            pass
         except pytube.exceptions.RegexMatchError:
-            print("pytube.exceptions.RegexMatchError")
+            pass
 
 
-playlink = 'https://www.youtube.com/playlist?list=PL9tY0BWXOZFvN_9mCk7b8h33NrlxiPTx1'
-soup_title = create_folder(playlink)
-item = collect(playlink)
-threads = get_threads(item)
-print(len(item))
-
-
-def threads_lists(threads):
+def get_threads_lists(threads):
     zzz = zip(threads, threads[1:])
     for z in zzz:
         z = list(range(z[0], z[1]))
         yield(z)
 
 
-threads_ls = threads_lists(threads)
-
-
-def iteration_list(threads_ls, item):
-    for thr in threads_ls:
+def get_iteration_list(threads_list, elements_youtube_list):
+    for iter_thead in threads_list:
         final_list = []
-        for iter in thr:
-            final_list.append(item[iter])
+        for each in iter_thead:
+            final_list.append(elements_youtube_list[each])
         yield(final_list)
 
 
-threads_ls = iteration_list(threads_ls, item)
+playlist_link = 'https://www.youtube.com/playlist?list=PL9tY0BWXOZFvN_9mCk7b8h33NrlxiPTx1'
+lxml_doc = get_lxml_page(playlist_link)
+playlist_name = create_folder(lxml_doc)
+video_hrefs_list = collect(lxml_doc)
 
+threads_iter_lists = get_threads(video_hrefs_list)
+threads_ls = get_threads_lists(threads_iter_lists)
+threads_ls = get_iteration_list(threads_ls, video_hrefs_list)
 for thread in threads_ls:
-    t = threading.Thread(target=starter, args=(soup_title, thread))
-    threads.append(t)
+    t = threading.Thread(target=starter, args=(playlist_name, thread))
+    threads_iter_lists.append(t)
     t.start()
