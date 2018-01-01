@@ -44,13 +44,13 @@ def convert_mp3(soup_title, ylink):
     except OSError as exception:
         if exception.errno != errno.EEXIST:
             raise
-    if not os.path.exists('mp3 - '+soup_title+'\\'+ylink+'.mp3'):
+    if not os.path.exists('mp3 - '+soup_title+'/'+ylink+'.mp3'):
         try:
-            clip = mp.VideoFileClip(soup_title+'\\'+ylink+'.mp4')
+            clip = mp.VideoFileClip(soup_title+'/'+ylink+'.mp4')
         except OSError:
-            clip = mp.VideoFileClip(soup_title+'\\'+ylink+'.webm')
+            clip = mp.VideoFileClip(soup_title+'/'+ylink+'.webm')
 
-        clip.audio.write_audiofile('mp3 - '+soup_title+'//'+ylink+'.mp3', progress_bar=False)
+        clip.audio.write_audiofile('mp3 - '+soup_title+'/'+ylink+'.mp3', progress_bar=False)
         print(ylink+'.mp3 created')
 
 
@@ -69,7 +69,7 @@ def starter(soup_title, item):
             ylink = bs.BeautifulSoup(ylink, 'lxml')
             ylink = ylink.title.text.replace(' - YouTube', "")
             ylink = safe_filename(ylink)
-            if not os.path.exists(soup_title + '\\' + ylink + '.mp4') | (os.path.exists(soup_title + '\\' + ylink + '.webm')):
+            if not os.path.exists(soup_title + '/' + ylink + '.mp4') | (os.path.exists(soup_title + '/' + ylink + '.webm')):
                 YouTube(youlink).streams.first().download(soup_title)
                 print("video downloaded "+ylink)
             else:
@@ -81,7 +81,6 @@ def starter(soup_title, item):
             print('ADULT CONTENT '+ylink)
         except pytube.exceptions.RegexMatchError:
             print("pytube.exceptions.RegexMatchError")
-
 
 
 playlink = 'https://www.youtube.com/playlist?list=PL9tY0BWXOZFvN_9mCk7b8h33NrlxiPTx1'
