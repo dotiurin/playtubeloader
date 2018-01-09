@@ -1,4 +1,3 @@
-import moviepy.editor as mp
 import urllib.error
 import bs4 as bs
 import urllib.request
@@ -40,21 +39,6 @@ def create_folder(doc_lxml):
             raise
         return soup_title
 
-
-def convert_mp3(soup_title, ylink):
-    try:
-        os.makedirs('mp3 - ' + soup_title)
-    except OSError as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-    if not os.path.exists('mp3 - '+soup_title+'/'+ylink+'.mp3'):
-        try:
-            clip = mp.VideoFileClip(soup_title+'/'+ylink+'.mp4')
-        except OSError:
-            clip = mp.VideoFileClip(soup_title+'/'+ylink+'.webm')
-        clip.audio.write_audiofile('mp3 - '+soup_title+'/'+ylink+'.mp3', progress_bar=False, verbose=False)
-
-
 def get_threads(item):
     threadcoef = int(len(item)/5)  # кол-во потоков
     threads = list(range(len(item)))[::threadcoef]
@@ -69,14 +53,13 @@ def starter(soup_title, adress_list):
             ylink = bs.BeautifulSoup(ylink, 'lxml')
             ylink = ylink.title.text.replace(' - YouTube', "")
             ylink = safe_filename(ylink)
-            if not os.path.exists(soup_title + '/' + ylink + '.mp4') | (os.path.exists(soup_title + '/' + ylink + '.webm')):
-                YouTube(youlink).streams.first().download(soup_title)
-            convert_mp3(soup_title, ylink)
+            if not os.path.exists(soup_title + '/' + ylink + '.mp3') or (os.path.exists(soup_title + '/' + ylink + '.webm')):
+                YouTube(youlink).streams.filter(only_audio=True).first().download(soup_title)
         except urllib.error.URLError:
             pass
         except pytube.exceptions.RegexMatchError:
             pass
-        except TypeError:
+        except:
             pass
 
 
