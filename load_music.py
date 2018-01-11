@@ -78,7 +78,7 @@ def get_iteration_list(threads_list, elements_youtube_list):
         yield(final_list)
 
 
-playlist_link = 'https://www.youtube.com/playlist?list=PLsKrCkLsu9OE7v9uQuxtTHzLDGxKrPXmt'
+playlist_link = 'https://www.youtube.com/playlist?list=PLFz8rX8TLr6K7uS2mEOTfFz3TUf8tB29k'
 lxml_doc = get_lxml_page(playlist_link)
 playlist_name = create_folder(lxml_doc)
 video_hrefs_list = collect(lxml_doc)
